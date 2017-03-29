@@ -2,29 +2,32 @@
 #include <nvault>
 
 #define PLUGIN "<IR> Reward-System"
-#define VERSION "0.2"
+#define VERSION "0.6.1"
 #define AUTHOR "yas17sin"
 
 // Tag for messages
-#define TAG "<IR>Reward-System"
+#define TAG "<IR> Reward-System"
 
 #define MAX_PLAYERS 32
 
 #define ADMIN_ACCESS ADMIN_LEVEL_H
 
-//new menu
-
-//new g_pCvar_Point;
+new g_pCvar_Point;
 
 new g_iPoints[MAX_PLAYERS +1], g_iName[MAX_PLAYERS +1];
 
-new g_iVault;
+new g_szAuthId[33][35], g_szDay[3], g_iVault, g_iDay
 
 new bool:g_bGiveRemove;
+
+new g_szPoints[100];
 
 public plugin_init()
 {
 	register_plugin( PLUGIN, VERSION, AUTHOR )
+	
+	get_time("%d", g_szDay, charsmax(g_szDay))
+	g_iDay = str_to_num(g_szDay)
 	
 	register_clcmd( "say /rewardmenu", "main_menu")
 	register_clcmd( "say_team /rewardmenu", "main_menu")
@@ -38,12 +41,12 @@ public plugin_init()
 	register_clcmd("say /givepoints", "Playerlist")
 	register_clcmd("point", "PointsAction")
 	
-	//g_pCvar_Point = register_cvar("cvar_rewarded_points", "5");
+	g_pCvar_Point = register_cvar("cvar_rewarded_points", "5");
 	
 	new g_iVault = nvault_open("Reward-System");
 	
 	if ( g_iVault == INVALID_HANDLE )
-    set_fail_state( "Error opening nVault" );
+	set_fail_state( "Error opening nVault" );
 	
 	set_task(300.0, "Task_Advertise", _, _, _, "b");
 }
@@ -52,18 +55,67 @@ public plugin_end()
 	
 public client_putinserver(id)
 {
+	get_user_name(id, g_szAuthId[id], charsmax(g_szAuthId[])); 
+	
+	new iDay = nvault_get(g_iVault, g_szAuthId[id]); 
+	
+	if(!iDay || iDay != g_iDay) 
+	{ 
+		if(g_pCvar_Point != 0)
+		{
+			g_iPoints[id] += g_pCvar_Point;
+			
+			client_print(id, print_chat, "[%s] You got %i Points for Connecting this day %s", TAG, g_pCvar_Point, g_szAuthId[id]);
+		}
+	}
+	else
+	{
+		client_print(id, print_center, "You have taken today's daily reward.");
+	}
+	
 	if(is_user_hltv(id) || is_user_bot(id))
 		return PLUGIN_HANDLED;
 
-	//Load(id);
+	Load(id);
 	return PLUGIN_HANDLED;
 }
 public client_disconnect(id)
 {
+	nvault_set(g_iVault, g_szAuthId[id], g_szDay)
+	
 	if(is_user_hltv(id) || is_user_bot(id))
 		return PLUGIN_HANDLED;
 	
-	//Save(id);
+	Save(id);
+	return PLUGIN_HANDLED;
+}
+public main_menu(id)
+{
+	new menu = menu_create("\r<IR> Reward\y-\rSystem", "reward_handler")
+	
+	if(g_iPoints[id] >= 10 )
+		menu_additem(menu, "\wthis item is 10 point", "", 0)
+	else
+		menu_additem(menu, "\dthis item is 10 point", "", 0)
+	
+	menu_display(id, menu, 0)
+}
+public reward_handler(id, menu, item)
+{
+	switch(item)
+	{
+		case 0:
+		{
+			if(is_user_connected(id))
+			{
+				client_print(id, print_center, "[%s] you success buying this item say thanks to yas17sin :3", TAG)
+			}
+		}
+		case MENU_EXIT:
+		{
+			menu_destroy(menu)
+		}
+	}
 	return PLUGIN_HANDLED;
 }
 public My_Point(id)
@@ -167,7 +219,7 @@ public PointsAction(id)
 	else
 		g_iPoints[g_iName[id]] += iAmount;
 	
-	//CheckPoint(g_iName[id]);
+	CheckPoint(g_iName[id]);
 	
 	return PLUGIN_HANDLED;
 }
@@ -175,4 +227,61 @@ public Task_Advertise()
 {
 	client_print(0, print_chat, "[%s] This Server is Runing Reward-System By yas17sin.", TAG);
 }
-/* Stopped right here to finish later all comented lines are to continue later */
+CheckPoint(id)
+{
+	if(g_iPoints[id] >= g_szPoints[g_iPoints[id]+1] && g_szPoints[g_iPoints[id]+1] != 0)
+	{
+		g_iPoints[id]++;
+		
+		if(g_iPoints[id] >= g_szPoints[g_iPoints[id]+1] && g_szPoints[g_iPoints[id]+1] != 0)
+		{
+			CheckPoint(id);
+			return PLUGIN_HANDLED;
+		}
+		
+		client_cmd(0, "spk events/task_complete.wav");
+		
+	}
+	if(g_iPoints[id] != 0 && g_iPoints[id] <= g_szPoints[g_iPoints[id]-1])
+	{
+		g_iPoints[id]--;
+		
+		if(g_iPoints[id] != 0 && g_iPoints[id] <= g_szPoints[g_iPoints[id]-1])
+		{
+			CheckPoint(id);
+			return PLUGIN_HANDLED;
+		}
+		
+		client_print(id, print_chat, "You Points got a downgrade. You are now %i Points ", TAG, g_iPoints[id]);
+	}
+	return PLUGIN_HANDLED;
+}
+Save(id)
+{
+    new szAuthId[32]; 
+    get_user_authid(id, szAuthId, charsmax(szAuthId));
+    
+    new szName[32]; 
+    get_user_name(id, szName, charsmax(szName));
+    
+    new szData[200];
+    formatex(szData, charsmax(szData), "^"%s^" ^"%i^"", szName, g_iPoints[id]);
+	
+    nvault_set(g_iVault, szAuthId, szData);
+}
+Load(id)
+{   
+    new szAuthId[32]; get_user_authid(id, szAuthId, charsmax(szAuthId));
+    
+    new szData[200], iTimeStamp;
+    if(nvault_lookup(g_iVault, szAuthId, szData, charsmax(szData), iTimeStamp))
+    {
+              new szSavedname[32], szPoint[16];
+              parse(szData, szSavedname, charsmax(szSavedname), szPoint, charsmax(szPoint))
+              remove_quotes(szSavedname)
+              remove_quotes(szPoint)
+              set_user_info(id, "name", szSavedname)
+              g_iPoints[id] = str_to_num(szPoint)
+     }
+}
+/* Stopped right here this beta version to finish later all comented lines are to continue later */
