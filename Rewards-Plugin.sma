@@ -12,8 +12,6 @@
 
 #define ADMIN_ACCESS ADMIN_LEVEL_H
 
-new g_pCvar_Point;
-
 new g_iPoints[MAX_PLAYERS +1], g_iName[MAX_PLAYERS +1];
 
 new g_szAuthId[33][35], g_szDay[3], g_iVault, g_iDay
@@ -41,7 +39,8 @@ public plugin_init()
 	register_clcmd("say /givepoints", "Playerlist")
 	register_clcmd("point", "PointsAction")
 	
-	g_pCvar_Point = register_cvar("cvar_rewarded_points", "5");
+	register_clcmd("say /get", "reward_me")
+	register_clcmd("say /free", "reward_me")
 	
 	new g_iVault = nvault_open("Reward-System");
 	
@@ -55,24 +54,6 @@ public plugin_end()
 	
 public client_putinserver(id)
 {
-	get_user_name(id, g_szAuthId[id], charsmax(g_szAuthId[])); 
-	
-	new iDay = nvault_get(g_iVault, g_szAuthId[id]); 
-	
-	if(!iDay || iDay != g_iDay) 
-	{ 
-		if(g_pCvar_Point != 0)
-		{
-			g_iPoints[id] += g_pCvar_Point;
-			
-			client_print(id, print_chat, "[%s] You got %i Points for Connecting this day %s", TAG, g_pCvar_Point, g_szAuthId[id]);
-		}
-	}
-	else
-	{
-		client_print(id, print_center, "You have taken today's daily reward.");
-	}
-	
 	if(is_user_hltv(id) || is_user_bot(id))
 		return PLUGIN_HANDLED;
 
@@ -88,6 +69,21 @@ public client_disconnect(id)
 	
 	Save(id);
 	return PLUGIN_HANDLED;
+}
+public reward_me(id)
+{
+	get_user_name(id, g_szAuthId[id], charsmax(g_szAuthId[])); 
+	
+	new iDay = nvault_get(g_iVault, g_szAuthId[id]); 
+	
+	if(!iDay || iDay != g_iDay) 
+	{ 
+		g_iPoints[id] += 5
+	}
+	else
+	{
+		client_print(id, print_center, "You have taken today's daily reward.");
+	}
 }
 public main_menu(id)
 {
@@ -284,4 +280,4 @@ Load(id)
               g_iPoints[id] = str_to_num(szPoint)
      }
 }
-/* Stopped right here this beta version to finish later all comented lines are to continue later */
+/* Stopped right here to finish later all comented lines are to continue later */
