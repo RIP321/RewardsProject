@@ -123,7 +123,7 @@ public My_Point(id)
 	
 	return PLUGIN_HANDLED
 }
-Playerlist(id) 
+public Playerlist(id) 
 {
 	if(get_user_flags(id) & ADMIN_ACCESS)
 	{
