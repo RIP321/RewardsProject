@@ -8,11 +8,9 @@
 // Tag for messages
 #define TAG "<IR> Reward-System"
 
-#define MAX_PLAYERS 32
-
 #define ADMIN_ACCESS ADMIN_LEVEL_H
 
-new g_iPoints[MAX_PLAYERS +1], g_iName[MAX_PLAYERS +1];
+new g_iPoints[33], g_iName[33];
 
 new g_iVault;
 
@@ -202,11 +200,11 @@ public Task_Advertise()
 }
 CheckPoint(id)
 {
-	if(g_iPoints[id] >= g_szPoints[g_iPoints[id]+1] && g_szPoints[g_iPoints[id]+1] != 0)
+	if(g_iPoints[id] >= g_szPoints[g_iPoints[id]] && g_szPoints[g_iPoints[id]] != 0)
 	{
 		g_iPoints[id]++;
 		
-		if(g_iPoints[id] >= g_szPoints[g_iPoints[id]+1] && g_szPoints[g_iPoints[id]+1] != 0)
+		if(g_iPoints[id] >= g_szPoints[g_iPoints[id]] && g_szPoints[g_iPoints[id]] != 0)
 		{
 			CheckPoint(id);
 			return PLUGIN_HANDLED;
@@ -215,11 +213,11 @@ CheckPoint(id)
 		client_cmd(0, "spk events/task_complete.wav");
 		
 	}
-	if(g_iPoints[id] != 0 && g_iPoints[id] <= g_szPoints[g_iPoints[id]-1])
+	if(g_iPoints[id] != 0 && g_iPoints[id] <= g_szPoints[g_iPoints[id]])
 	{
 		g_iPoints[id]--;
 		
-		if(g_iPoints[id] != 0 && g_iPoints[id] <= g_szPoints[g_iPoints[id]-1])
+		if(g_iPoints[id] != 0 && g_iPoints[id] <= g_szPoints[g_iPoints[id]])
 		{
 			CheckPoint(id);
 			return PLUGIN_HANDLED;
