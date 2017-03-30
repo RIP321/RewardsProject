@@ -50,7 +50,7 @@ public plugin_init()
 	set_task(300.0, "Task_Advertise", _, _, _, "b");
 }
 public plugin_end() 
-	nvault_close(g_iVault);
+	nvault_close(g_iVault)
 	
 public client_putinserver(id)
 {
