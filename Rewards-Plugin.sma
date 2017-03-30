@@ -14,7 +14,7 @@
 
 new g_iPoints[MAX_PLAYERS +1], g_iName[MAX_PLAYERS +1];
 
-new g_szAuthId[33][35], g_szDay[3], g_iVault, g_iDay
+new g_iVault;
 
 new bool:g_bGiveRemove;
 
@@ -23,9 +23,6 @@ new g_szPoints[100];
 public plugin_init()
 {
 	register_plugin( PLUGIN, VERSION, AUTHOR )
-	
-	get_time("%d", g_szDay, charsmax(g_szDay))
-	g_iDay = str_to_num(g_szDay)
 	
 	register_clcmd( "say /rewardmenu", "main_menu")
 	register_clcmd( "say_team /rewardmenu", "main_menu")
@@ -38,9 +35,6 @@ public plugin_init()
 	
 	register_clcmd("say /givepoints", "Playerlist")
 	register_clcmd("point", "PointsAction")
-	
-	register_clcmd("say /get", "reward_me")
-	register_clcmd("say /free", "reward_me")
 	
 	new g_iVault = nvault_open("Reward-System");
 	
@@ -62,28 +56,11 @@ public client_putinserver(id)
 }
 public client_disconnect(id)
 {
-	nvault_set(g_iVault, g_szAuthId[id], g_szDay)
-	
 	if(is_user_hltv(id) || is_user_bot(id))
 		return PLUGIN_HANDLED;
 	
 	Save(id);
 	return PLUGIN_HANDLED;
-}
-public reward_me(id)
-{
-	get_user_name(id, g_szAuthId[id], charsmax(g_szAuthId[])); 
-	
-	new iDay = nvault_get(g_iVault, g_szAuthId[id]); 
-	
-	if(!iDay || iDay != g_iDay) 
-	{ 
-		g_iPoints[id] += 5
-	}
-	else
-	{
-		client_print(id, print_center, "You have taken today's daily reward.");
-	}
 }
 public main_menu(id)
 {
